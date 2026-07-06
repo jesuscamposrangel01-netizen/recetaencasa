@@ -1,1 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Junta de Campesinos de Parlamenco · Petroglifos</title>
+    <!-- Leaflet para el mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4efe6;
+            color: #2e241e;
+            line-height: 1.6;
+        }
+
+        /* HEADER */
+        header {
+            background: linear-gradient(145deg, #4d3e32, #2f241b);
+            color: #f0e2d0;
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 6px solid #b48a6b;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            letter-spacing: 4px;
+            text-shadow: 3px 3px 0 #1f1611;
+        }
+
+        header p {
+            font-size: 1.3rem;
+            font-style: italic;
+            color: #dac5b0;
+        }
+
+        /* NAV */
+        nav {
+            background-color: #3e3026;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.8rem 1rem;
+            border-bottom: 3px solid #b48a6b;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav a {
+            color: #f0e2d0;
+            text-decoration: none;
+            padding: 0.5rem 1.8rem;
+            font-weight: bold;
+            border-radius: 30px;
+            transition: 0.3s;
+            background: #5a473a;
+        }
+
+        nav a:hover {
+            background: #b48a6b;
+            color: #1f1611;
+            transform: scale(1.05);
+        }
+
+        /* CONTENEDOR */
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* HERO */
+        .hero {
+            background: #d9cdbc;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            border-left: 10px solid #7d5f48;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            color: #2f241b;
+        }
+
+        .hero span {
+            background: #7d5f48;
+            color: #f4efe6;
+            padding: 0.2rem 1rem;
+            border-radius: 40px;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        /* GRID PRINCIPAL */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2.5rem 0;
+        }
+
+        .card {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 24px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            border-bottom: 6px solid #b48a6b;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+        }
+
+        .card h3 {
+            color: #4d3e32;
+            font-size: 1.8rem;
+            border-left: 6px solid #b48a6b;
+            padding-left: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .card .fecha {
+            display: inline-block;
+            background: #e5d9c8;
+            padding: 0.2rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* MAPA */
+        .mapa-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            margin: 2.5rem 0;
+            border-bottom: 6px solid #b48a6b;
+        }
+
+        #mapa {
+            height: 400px;
+            border-radius: 16px;
+            z-index: 1;
+        }
+
+        /* GALERÍA */
+        .galeria {
+            margin: 2.5rem 0;
+        }
+
+        .galeria h2 {
+            color: #2f241b;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        .galeria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .galeria-grid img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 4px solid #d9cdbc;
+            background: #d9cdbc;
+        }
+
+        .galeria-grid img:hover {
+            transform: scale(1.03);
+            border-color: #7d5f48;
+        }
+
+        /* Lightbox (ventana modal para imágenes) */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(255,255,255,0.2);
+        }
+
+        .lightbox .cerrar {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            color: white;
+            font-size: 3rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* TABLERO DE NOTICIAS */
+        .tablero {
+            background: white;
+            padding: 1.8rem;
+            border-radius: 24px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            margin: 2.5rem 0;
+            border-left: 10px solid #7d5f48;
+        }
+
+        .tablero h2 {
+            color: #2f241b;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .noticia {
+            background: #f4efe6;
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 0.8rem;
+            border-left: 6px solid #b48a6b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .noticia .hora {
+            background: #7d5f48;
+            color: white;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .noticia .texto {
+            flex: 1;
+            margin: 0 1rem;
+        }
+
+        /* FORMULARIO */
+        .formulario {
+            background: white;
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+            margin: 2.5rem 0;
+            border-bottom: 6px solid #b48a6b;
+        }
+
+        .formulario input,
+        .formulario textarea,
+        .formulario select {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0 1rem 0;
+            border: 2px solid #d9cdbc;
+            border-radius: 12px;
+            font-family: inherit;
+            background: #faf8f4;
+        }
+
+        .formulario button {
+            background: #4d3e32;
+            color: white;
+            padding: 0.8rem 2.5rem;
+            border: none;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .formulario button:hover {
+            background: #b48a6b;
+            transform: scale(1.02);
+        }
+
+        /* STREAMING */
+        .streaming {
+            background: #1f1611;
+            padding: 2rem;
+            border-radius: 24px;
+            margin: 2.5rem 0;
+            text-align: center;
+            border: 4px solid #b48a6b;
+        }
+
+        .streaming h2 {
+            color: #f0e2d0;
+            margin-bottom: 1rem;
+        }
+
+        .streaming iframe {
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            border-radius: 16px;
+            border: 3px solid #b48a6b;
+        }
+
+        .streaming p {
+            color: #dac5b0;
+            margin-top: 1rem;
+        }
+
+        /* LISTA PETROGLIFOS */
+        .lista-petro {
+            background: #e5d9c8;
+            padding: 2rem;
+            border-radius: 30px;
+            margin: 2.5rem 0;
+        }
+
+        .lista-petro ul {
+            columns: 2;
+            list-style: none;
+        }
+
+        .lista-petro li {
+            background: #f4efe6;
+            margin: 0.5rem 0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 500;
+            border-left: 8px solid #7d5f48;
+        }
+
+        /* FOOTER */
+        footer {
+            background: #2f241b;
+            color: #cbb7a4;
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+            border-top: 6px solid #b48a6b;
+        }
+
+        footer small {
+            display: block;
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
+            color: #8f7a68;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 700px) {
+            header h1 { font-size: 2rem; }
+            .lista-petro ul { columns: 1; }
+            nav a { padding: 0.4rem 1rem; }
+            #mapa { height: 250px; }
+            .streaming iframe { height: 250px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌾 JUNTA DE CAMPESINOS DE PARLAMENCO</h1>
+        <p>Patrimonio arqueológico · Petroglifos y memoria ancestral</p>
+    </header>
+
+    <nav>
+        <a href="#inicio">Inicio</a>
+        <a href="#mapa">Mapa</a>
+        <a href="#galeria">Galería</a>
+        <a href="#noticias">Noticias</a>
+        <a href="#streaming">En Vivo</a>
+        <a href="#contacto">Contacto</a>
+    </nav>
+
+    <div class="container" id="inicio">
+        <!-- HERO -->
+        <section class="hero">
+            <h2>⛰️ Guardianes de la piedra escrita</h2>
+            <p>Los petroglifos de Parlamenco son más que dibujos: son el <strong>lenguaje de nuestros antepasados</strong>. La junta de campesinos protege y divulga este legado.</p>
+            <span>🔍 Descubre su significado</span>
+        </section>
+
+        <!-- CARDS INFORMATIVAS -->
+        <div class="grid">
+            <article class="card">
+                <h3>🪨 ¿Qué son?</h3>
+                <p>Grabados en roca que representan figuras humanas, animales, espirales y símbolos astronómicos. Tienen más de <strong>2000 años</strong> de antigüedad.</p>
+                <span class="fecha">📅 Época prehispánica</span>
+            </article>
+            <article class="card">
+                <h3>🧭 Ubicación</h3>
+                <p>En los cerros aledaños a la comunidad de Parlamenco, junto a los antiguos caminos de agua y miradores naturales.</p>
+                <span class="fecha">📍 Valle del río Paraná</span>
+            </article>
+            <article class="card">
+                <h3>🌿 Conservación</h3>
+                <p>La junta realiza limpieza anual, señalización y jornadas de sensibilización para evitar vandalismo y erosión.</p>
+                <span class="fecha">🤝 Campesinos custodios</span>
+            </article>
+        </div>
+
+        <!-- MAPA -->
+        <div class="mapa-container" id="mapa">
+            <h3 style="color:#2f241b; margin-bottom:1rem;">🗺️ Ubicación de los petroglifos</h3>
+            <div id="mapa"></div>
+            <p style="margin-top:0.8rem; font-size:0.9rem; color:#5a473a;">📍 Zona arqueológica de Parlamenco · Coordenadas: -14.823, -64.901 (aproximadas)</p>
+        </div>
+
+        <!-- GALERÍA -->
+        <div class="galeria" id="galeria">
+            <h2>🖼️ Galería de petroglifos</h2>
+            <div class="galeria-grid">
+                <!-- Imágenes de ejemplo (puedes reemplazar las URL) -->
+                <img src="https://via.placeholder.com/400x300/7d5f48/fff?text=Petroglifo+1" alt="Petroglifo 1" onclick="abrirLightbox(this)">
+                <img src="https://via.placeholder.com/400x300/5a473a/fff?text=Petroglifo+2" alt="Petroglifo 2" onclick="abrirLightbox(this)">
+                <img src="https://via.placeholder.com/400x300/4d3e32/fff?text=Petroglifo+3" alt="Petroglifo 3" onclick="abrirLightbox(this)">
+                <img src="https://via.placeholder.com/400x300/3e3026/fff?text=Petroglifo+4" alt="Petroglifo 4" onclick="abrirLightbox(this)">
+                <img src="https://via.placeholder.com/400x300/7d5f48/fff?text=Petroglifo+5" alt="Petroglifo 5" onclick="abrirLightbox(this)">
+                <img src="https://via.placeholder.com/400x300/5a473a/fff?text=Petroglifo+6" alt="Petroglifo 6" onclick="abrirLightbox(this)">
+            </div>
+        </div>
+
+        <!-- LIGHTBOX (ventana para ver imágenes grandes) -->
+        <div class="lightbox" id="lightbox" onclick="cerrarLightbox()">
+            <span class="cerrar">&times;</span>
+            <img id="lightbox-img" src="" alt="Ampliar">
+        </div>
+
+        <!-- LISTA DE PETROGLIFOS -->
+        <div class="lista-petro">
+            <h2 style="color:#2f241b; margin-bottom:1rem;">📜 Petroglifos registrados</h2>
+            <ul>
+                <li>🌞 Espiral solar</li>
+                <li>🐆 Felino en acecho</li>
+                <li>🧑‍🌾 Figura agricultora</li>
+                <li>🌀 Laberinto ceremonial</li>
+                <li>🐍 Serpiente de agua</li>
+                <li>⭐ Constelación austral</li>
+                <li>🦙 Camélido sagrado</li>
+                <li>✋ Mano ancestral</li>
+            </ul>
+            <p style="margin-top:1.2rem; font-style:italic; color:#4d3e32;">➕ Se descubren nuevos trazados cada temporada de secano.</p>
+        </div>
+
+        <!-- TABLERO DE NOTICIAS -->
+        <div class="tablero" id="noticias">
+            <h2>📰 Tablero de noticias · Últimos hallazgos</h2>
+            <div id="contenedor-noticias">
+                <!-- Las noticias se cargan con JavaScript -->
+            </div>
+        </div>
+
+        <!-- STREAMING -->
+        <div class="streaming" id="streaming">
+            <h2>📡 En Vivo · Streaming desde Parlamenco</h2>
+            <!-- Cambia el src por tu enlace de YouTube/Facebook Live -->
+            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
+            <p>🔴 Transmisiones en vivo durante excavaciones y visitas guiadas</p>
+        </div>
+
+        <!-- FORMULARIO -->
+        <div class="formulario" id="contacto">
+            <h2 style="color:#2f241b;">📩 Contáctanos</h2>
+            <p style="color:#5a473a;">Reporta un hallazgo, apúntate a una visita o colabora con la junta.</p>
+            <form id="formContacto" onsubmit="enviarFormulario(event)">
+                <label>Nombre completo:</label>
+                <input type="text" placeholder="Tu nombre" required>
+
+                <label>Correo electrónico:</label>
+                <input type="email" placeholder="tu@email.com" required>
+
+                <label>Teléfono (opcional):</label>
+                <input type="tel" placeholder="Número de contacto">
+
+                <label>Motivo:</label>
+                <select>
+                    <option>Reportar un petroglifo nuevo</option>
+                    <option>Inscribirme a visita guiada</option>
+                    <option>Quiero colaborar</option>
+                    <option>Otra consulta</option>
+                </select>
+
+                <label>Mensaje:</label>
+                <textarea rows="4" placeholder="Escribe tu mensaje aquí..." required></textarea>
+
+                <button type="submit">✉️ Enviar mensaje</button>
+            </form>
+            <div id="mensaje-enviado" style="display:none; margin-top:1rem; padding:1rem; background:#d4edda; border-radius:12px; color:#155724;">
+                ✅ ¡Mensaje enviado con éxito! La junta te responderá pronto.
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>🌱 Junta de Campesinos de Parlamenco · Custodios de la memoria en piedra</p>
+        <small>© 2026 · Hecho con manos de tierra y amor por la arqueología</small>
+    </footer>
+
+    <script>
+        // ===================== MAPA =====================
+        const mapa = L.map('mapa').setView([-14.823, -64.901], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapa);
+
+        // Marcador en la zona de los petroglifos
+        L.marker([-14.823, -64.901])
+            .addTo(mapa)
+            .bindPopup('<b>Zona de Petroglifos</b><br>Parlamenco, Valle del Paraná')
+            .openPopup();
+
+        // ===================== LIGHTBOX =====================
+        function abrirLightbox(img) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightbox.style.display = 'flex';
+            lightboxImg.src = img.src;
+        }
+
+        function cerrarLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        // Cerrar con tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') cerrarLightbox();
+        });
+
+        // ===================== TABLERO DE NOTICIAS =====================
+        // Lista de noticias (puedes agregar más)
+        const noticias = [
+            { hora: '10:30', texto: '🔍 Descubierto nuevo petroglifo con forma de espiral doble en el cerro norte.' },
+            { hora: '09:15', texto: '🧑‍🌾 Campesinos realizan limpieza de maleza en el sendero de acceso.' },
+            { hora: '08:00', texto: '📢 Próxima visita guiada: 22 de agosto. Inscripciones abiertas.' },
+            { hora: 'Ayer', texto: '🌧️ Las lluvias revelaron nuevas piedras con grabados en la quebrada.' },
+            { hora: 'Ayer', texto: '🏛️ Arqueólogos de la universidad confirman antigüedad de 2,300 años.' },
+        ];
+
+        function cargarNoticias() {
+            const contenedor = document.getElementById('contenedor-noticias');
+            contenedor.innerHTML = '';
+            noticias.forEach(noticia => {
+                const div = document.createElement('div');
+                div.className = 'noticia';
+                div.innerHTML = `
+                    <span class="hora">${noticia.hora}</span>
+                    <span class="texto">${noticia.texto}</span>
+                `;
+                contenedor.appendChild(div);
+            });
+        }
+
+        cargarNoticias();
+
+        // Simular noticias en vivo (cada 20 segundos aparece una nueva)
+        let noticiaIndex = 0;
+        const noticiasExtra = [
+            { hora: 'Justo ahora', texto: '🆕 Visitantes reportan posible nuevo petroglifo en el sendero este.' },
+            { hora: 'Justo ahora', texto: '📸 Compartimos nuevas fotos en la galería de esta semana.' },
+        ];
+
+        setInterval(() => {
+            if (noticiaIndex < noticiasExtra.length) {
+                const contenedor = document.getElementById('contenedor-noticias');
+                const div = document.createElement('div');
+                div.className = 'noticia';
+                div.style.animation = 'fadeIn 0.5s';
+                div.innerHTML = `
+                    <span class="hora">${noticiasExtra[noticiaIndex].hora}</span>
+                    <span class="texto">${noticiasExtra[noticiaIndex].texto}</span>
+                `;
+                contenedor.prepend(div);
+                noticiaIndex++;
+            }
+        }, 20000);
+
+        // ===================== FORMULARIO =====================
+        function enviarFormulario(e) {
+            e.preventDefault();
+            document.getElementById('mensaje-enviado').style.display = 'block';
+            document.getElementById('formContacto').reset();
+            setTimeout(() => {
+                document.getElementById('mensaje-enviado').style.display = 'none';
+            }, 5000);
+        }
+
+        // ===================== ESTILO ANIMACIÓN =====================
+        const styleAnim = document.createElement('style');
+        styleAnim.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(styleAnim);
+
+        console.log('🌾 Junta de Campesinos de Parlamenco · Web cargada con éxito');
+    </script>
+</body>
+</html>
